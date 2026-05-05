@@ -18,7 +18,7 @@ fun main() {
     // Проверка, что все элементы — целые числа
     val numbers = try {
         parts.map { it.toInt() }
-    } catch (e: NumberFormatException) {
+    } catch (_: NumberFormatException) {
         println("Ошибка: ввод должен содержать только целые числа!")
         return
     }
