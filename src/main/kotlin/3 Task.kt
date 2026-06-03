@@ -1,40 +1,39 @@
 fun main() {
     val maxSize = 10
 
-    println("Введите до $maxSize целых чисел через пробел:")
+    while (true) {
+        println("Введите до $maxSize целых чисел через пробел (или Enter для выхода):")
 
-    // Считываем строку, убираем лишние пробелы по краям
-    val input = readln().trim()
+        val numbers = try {
+            readln()
+                .trim()
+                .split("\\s+".toRegex())
+                .map { it.toInt() }
+        } catch (_: NumberFormatException) {
+            println("Ошибка: ввод должен содержать только целые числа!")
+            println("Попробуйте снова.\n")
+            continue
+        }
 
-    // Разбиваем строку по пробелам
-    val parts = input.split("\\s+".toRegex())
+        // Выход по пустой строке (после trim — пустой список)
+        if (numbers.isEmpty()) {
+            println("Выход из программы.")
+            return
+        }
 
-    // Проверка на количество
-    if (parts.size > maxSize) {
-        println("Ошибка: разрешён ввод до $maxSize значений, вы ввели ${parts.size}.")
-        return
+        // Проверка на количество
+        if (numbers.size > maxSize) {
+            println("Ошибка: разрешён ввод до $maxSize значений, вы ввели ${numbers.size}.")
+            println("Попробуйте снова.\n")
+            continue
+        }
+
+        // Всё хорошо — выводим результат
+        println("\nИсходный массив: $numbers")
+
+        val uniqueNumbers = numbers.distinct()
+        println("Массив без повторений: $uniqueNumbers")
+
+        break
     }
-
-    // Проверка, что все элементы — целые числа
-    val numbers = try {
-        parts.map { it.toInt() }
-    } catch (_: NumberFormatException) {
-        println("Ошибка: ввод должен содержать только целые числа!")
-        return
-    }
-
-    // Если ничего не введено
-    if (numbers.isEmpty()) {
-        println("Вы не ввели ни одного числа.")
-        return
-    }
-
-    // Вывод исходного массива
-    println("\nИсходный массив: $numbers")
-
-    // Удаление повторяющихся элементов
-    val uniqueNumbers = numbers.distinct()
-
-    // Вывод итога
-    println("Массив без повторений: $uniqueNumbers")
 }
