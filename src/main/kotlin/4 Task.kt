@@ -1,178 +1,187 @@
-// ========== 1. Базовый класс для адреса ==========
-sealed class Address(open val description: String) {
-    abstract val hostName: String
-    abstract fun format(): String
+// ========== ИНТЕРФЕЙСЫ ==========
+
+interface Printable {
+    fun printFormatted()
 }
 
-// ========== 2. Типы адресов ==========
+interface Inputable {
+    fun inputFromConsole(): Address
+}
 
-// Интернет-адрес
+interface AddressBookOperations {
+    fun sortByHostName()
+    fun searchByKeyword(keyword: String): List<Address>
+    fun printAll()
+}
+
+// ========== БАЗОВЫЙ КЛАСС ==========
+
+sealed class Address : Printable, Inputable {
+    abstract val description: String
+    abstract val hostName: String
+    abstract fun format(): String
+
+    override fun printFormatted() {
+        println(format())
+        println("   Описание: $description")
+        println("   Хост/узел: $hostName")
+        println("-".repeat(50))
+    }
+}
+
+// ========== ТИПЫ АДРЕСОВ ==========
+
 data class InternetAddress(
     val protocol: String,
     val host: String,
     val path: String,
     val fileName: String,
     override val description: String
-) : Address(description) {
+) : Address() {
     override val hostName: String get() = host
     override fun format(): String = "$protocol://$host/$path/$fileName"
+
+    override fun inputFromConsole(): Address {
+        println("\n--- Ввод интернет-адреса ---")
+        print("Протокол: "); val p = readln().trim()
+        print("Домен: "); val h = readln().trim()
+        print("Путь: "); val pa = readln().trim()
+        print("Файл: "); val f = readln().trim()
+        print("Описание: "); val d = readln().trim()
+        return InternetAddress(p, h, pa, f, d)
+    }
 }
 
-// Адрес в локальной сети
 data class LocalNetworkAddress(
     val computerName: String,
     val path: String,
     val fileName: String,
     override val description: String
-) : Address(description) {
+) : Address() {
     override val hostName: String get() = computerName
-    override fun format(): String = "\\\\$computerName\\$path\\$fileName"
+    override fun format(): String = """\\$computerName\$path\$fileName"""
+
+    override fun inputFromConsole(): Address {
+        println("\n--- Ввод адреса в локальной сети ---")
+        print("Компьютер: "); val c = readln().trim()
+        print("Путь: "); val p = readln().trim()
+        print("Файл: "); val f = readln().trim()
+        print("Описание: "); val d = readln().trim()
+        return LocalNetworkAddress(c, p, f, d)
+    }
 }
 
-// Локальный ресурс на диске
 data class LocalResourceAddress(
     val driveLetter: Char,
     val path: String,
     val fileName: String,
     override val description: String
-) : Address(description) {
+) : Address() {
     override val hostName: String get() = "LocalDrive_$driveLetter"
-    override fun format(): String = "$driveLetter:\\$path\\$fileName"
+    override fun format(): String = """$driveLetter:\$path\$fileName"""
+
+    override fun inputFromConsole(): Address {
+        println("\n--- Ввод локального ресурса ---")
+        print("Буква диска: "); val dl = readln().trim().first()
+        print("Путь: "); val p = readln().trim()
+        print("Файл: "); val f = readln().trim()
+        print("Описание: "); val d = readln().trim()
+        return LocalResourceAddress(dl, p, f, d)
+    }
 }
 
-// Email-адрес
 data class EmailAddress(
     val userName: String,
     val host: String,
     override val description: String
-) : Address(description) {
+) : Address() {
     override val hostName: String get() = host
     override fun format(): String = "$userName@$host"
+
+    override fun inputFromConsole(): Address {
+        println("\n--- Ввод email ---")
+        print("Пользователь: "); val u = readln().trim()
+        print("Домен: "); val h = readln().trim()
+        print("Описание: "); val d = readln().trim()
+        return EmailAddress(u, h, d)
+    }
 }
 
-// ========== 3. Адресная книга ==========
-class AddressBook {
+// ========== АДРЕСНАЯ КНИГА ==========
+
+class AddressBook : AddressBookOperations {
     private val addresses = mutableListOf<Address>()
 
-    fun add(address: Address) {
-        addresses.add(address)
+    fun add(address: Address) = addresses.add(address)
+    fun addAll(vararg addresses: Address) = this.addresses.addAll(addresses)
+
+    override fun sortByHostName() {
+        addresses.sortBy { it.hostName.lowercase() }
+        println("Сортировка выполнена.")
     }
 
-    fun addAll(vararg addresses: Address) {
-        this.addresses.addAll(addresses)
-    }
+    override fun searchByKeyword(keyword: String) =
+        addresses.filter { it.description.contains(keyword, ignoreCase = true) }
 
-    fun sortByHostName() {
-        addresses.sortBy { it.hostName.lowercase() }  // . приводим всё к нижнему регистру при поиске
-        println("Сортировка выполнена по имени узла (hostName) без учёта регистра")
-    }
-
-    fun searchByKeyword(keyword: String): List<Address> {
-        return addresses.filter { it.description.contains(keyword, ignoreCase = true) }
-    }
-
-    fun printAll() {
-        if (addresses.isEmpty()) {
-            println("Список адресов пуст.")
-            return
-        }
-        println("=".repeat(60))
+    override fun printAll() {
+        if (addresses.isEmpty()) { println("Список пуст."); return }
+        println("\n" + "=".repeat(60))
         println("Список адресов (всего: ${addresses.size})")
         println("=".repeat(60))
-        addresses.forEachIndexed { index, address ->
-            println("${index + 1}. ${address.format()}")
-            println("   Описание: ${address.description}")
-            println("   Хост/узел: ${address.hostName}")
-            println("-".repeat(50))
-        }
+        addresses.forEach { it.printFormatted() }
     }
 }
 
-// ========== 4. Главная функция ==========
+// ========== MAIN ==========
+
 fun main() {
     val book = AddressBook()
-
     book.addAll(
-        // Интернет-адреса (разные домены)
-        InternetAddress("https", "wikipedia.org", "wiki", "Kotlin", "Энциклопедия программирования"),
-        InternetAddress("https", "google.com", "search", "q=kotlin", "Поисковая система"),
+        // Интернет-адреса
+        InternetAddress("https", "google.com", "search", "q=kotlin", "Поисковая система Google"),
         InternetAddress("https", "github.com", "kotlin", "kotlin", "Репозиторий языка Kotlin"),
-        InternetAddress("https", "stackoverflow.com", "questions", "kotlin", "Форум для разработчиков"),
-        InternetAddress("https", "yandex.ru", "news", "index", "Новостной портал"),
-        InternetAddress("https", "youtube.com", "watch", "v=123", "Видеохостинг"),
         InternetAddress("ftp", "ftp.microsoft.com", "pub", "readme.txt", "Файловый архив Microsoft"),
-        InternetAddress("https", "kotlinlang.org", "docs", "home", "Официальная документация Kotlin"),
 
-        // Адреса в локальной сети (разные имена компьютеров)
-        LocalNetworkAddress("PC-ANTON", "Documents", "resume.pdf", "Резюме Антона"),
+        // Адреса в локальной сети
         LocalNetworkAddress("SERVER-DB", "database", "backup.sql", "База данных сервера"),
-        LocalNetworkAddress("PC-MARIA", "Photos", "vacation.jpg", "Фото Марии с отдыха"),
-        LocalNetworkAddress("LAPTOP-DIMA", "Projects", "app.exe", "Проект Димы"),
-        LocalNetworkAddress("PRINTER-SHARP", "print", "jobs", "Сетевой принтер"),
-        LocalNetworkAddress("NAS-SAMSUNG", "media", "movie.mp4", "Сетевое хранилище с фильмами"),
+        LocalNetworkAddress("PC-MARIA", "Photos", "vacation.jpg", "Фото с отпуска Марии"),
+        LocalNetworkAddress("NAS-STORAGE", "media", "movie.mp4", "Фильм на сетевом хранилище"),
 
-        // Локальные ресурсы (разные диски)
+        // Локальные ресурсы
         LocalResourceAddress('C', "Windows\\System32", "drivers.txt", "Системные драйверы"),
-        LocalResourceAddress('D', "Games\\Steam", "hl2.exe", "Установленная игра Half-Life"),
+        LocalResourceAddress('D', "Games\\Steam", "hl2.exe", "Установленная игра Half-Life 2"),
         LocalResourceAddress('E', "Backup\\2024", "photo.zip", "Архив с фотографиями"),
-        LocalResourceAddress('C', "Users\\Admin", "config.ini", "Файл конфигурации"),
 
-        // Email-адреса (разные домены)
-        EmailAddress("alexey.ivanov", "gmail.com", "Личная почта Алексея"),
-        EmailAddress("support", "microsoft.com", "Техподдержка Microsoft"),
-        EmailAddress("admin", "localhost", "Локальный администратор"),
-        EmailAddress("info", "mycompany.ru", "Корпоративная почта компании"),
-        EmailAddress("contact", "yandex.ru", "Контактная почта Яндекса"),
-        EmailAddress("hr.department", "company.com", "Отдел кадров")
+        // Email-адреса
+        EmailAddress("admin", "localhost", "почта администратора"),
+        EmailAddress("support", "microsoft.com", "почта техподдержки Microsoft"),
+        EmailAddress("ivan.petrov", "gmail.com", "Личная почта Ивана")
     )
 
-     // Показываем исходный (неотсортированный) список
-    println("\n ИСХОДНЫЙ СПИСОК (в порядке добавления):")
-    book.printAll()
-
-    // Сортируем
-    println("\n СОРТИРУЕМ ПО ИМЕНИ УЗЛА...")
-    book.sortByHostName()
-
-    // Показываем отсортированный список
-    println("\n ОТСОРТИРОВАННЫЙ СПИСОК (по hostName):")
-    book.printAll()
-
-    // Интерактивный поиск
-    println("\n" + "".repeat(30))
-    println("ПОИСК ПО ОПИСАНИЮ")
-    println("".repeat(30))
 
     while (true) {
-        print("\n Введите ключевое слово для поиска (или 'выйти' для завершения): ")
-        val keyword = readln().trim()
-
-        if (keyword.equals("выйти", ignoreCase = true)) {
-            println("\n Программа завершена. До свидания!")
-            break
-        }
-
-        if (keyword.isEmpty()) {
-            println(" Ошибка: Вы ничего не ввели. Попробуйте снова.")
-            continue
-        }
-
-        val searchResult = book.searchByKeyword(keyword)
-
-        if (searchResult.isEmpty()) {
-            println(" Слово \"$keyword\" не найдено ни в одном описании.")
-            println(" Попробуйте другое слово (например: почта, сервер, архив, игра, фото)")
-            println(" или введите 'выйти' для завершения.")
-        } else {
-            println(" Найдено ${searchResult.size} адрес(ов) по слову \"$keyword\":")
-            println("─".repeat(50))
-            searchResult.forEachIndexed { index, addr ->
-                println("${index + 1}. ${addr.format()}")
-                println("   Описание: ${addr.description}")
-                println("   Хост/узел: ${addr.hostName}")
-                println()
+        println("\n1. Показать  2. Добавить  3. Сортировать  4. Поиск  5. Выход")
+        when (readln().trim()) {
+            "1" -> book.printAll()
+            "2" -> {
+                println("Тип: 1-Интернет 2-Сеть 3-Диск 4-Email")
+                val addr = when (readln().trim()) {
+                    "1" -> InternetAddress("", "", "", "", "").inputFromConsole()
+                    "2" -> LocalNetworkAddress("", "", "", "").inputFromConsole()
+                    "3" -> LocalResourceAddress('C', "", "", "").inputFromConsole()
+                    "4" -> EmailAddress("", "", "").inputFromConsole()
+                    else -> null
+                }
+                if (addr != null) { book.add(addr); println("Добавлен!") }
             }
-            println("Поиск завершён. Можете ввести новое слово или 'выйти'.")
+            "3" -> { book.sortByHostName(); println("Готово.") }
+            "4" -> {
+                print("Ключевое слово: ")
+                val r = book.searchByKeyword(readln().trim())
+                if (r.isEmpty()) println("Не найдено.") else r.forEach { it.printFormatted() }
+            }
+            "5" -> { println("Пока!"); return }
+            else -> println("Неверно.")
         }
     }
 }
