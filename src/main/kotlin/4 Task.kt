@@ -112,8 +112,9 @@ data class EmailAddress(
 class AddressBook : AddressBookOperations {
     private val addresses = mutableListOf<Address>()
 
-    fun add(address: Address) = addresses.add(address)
-    fun addAll(vararg addresses: Address) = this.addresses.addAll(addresses)
+    fun add(vararg addresses: Address) {
+        this.addresses.addAll(addresses)
+    }
 
     override fun sortByHostName() {
         addresses.sortBy { it.hostName.lowercase() }
@@ -136,7 +137,7 @@ class AddressBook : AddressBookOperations {
 
 fun main() {
     val book = AddressBook()
-    book.addAll(
+    book.add(
         // Интернет-адреса
         InternetAddress("https", "google.com", "search", "q=kotlin", "Поисковая система Google"),
         InternetAddress("https", "github.com", "kotlin", "kotlin", "Репозиторий языка Kotlin"),
@@ -173,8 +174,9 @@ fun main() {
                     else -> null
                 }
                 if (addr != null) { book.add(addr); println("Добавлен!") }
+                else println("Неверный тип.")
             }
-            "3" -> { book.sortByHostName(); println("Готово.") }
+            "3" -> book.sortByHostName()
             "4" -> {
                 print("Ключевое слово: ")
                 val r = book.searchByKeyword(readln().trim())
