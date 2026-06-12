@@ -9,20 +9,9 @@ fun main() {
 
     println("\n=== Задача 2: Взаимное расположение прямоугольников ===")
     // Тестовые примеры для второй задачи
-    println("Прямоугольник A: left=1, right=5, bottom=1, top=4")
-    println("Прямоугольник B: left=2, right=4, bottom=2, top=3")
     testSecondTask(1.0, 5.0, 1.0, 4.0, 2.0, 4.0, 2.0, 3.0)  // B внутри A
-
-    println("\nПрямоугольник A: left=1, right=5, bottom=1, top=4")
-    println("Прямоугольник B: left=0, right=6, bottom=0, top=5")
     testSecondTask(1.0, 5.0, 1.0, 4.0, 0.0, 6.0, 0.0, 5.0)  // A внутри B
-
-    println("\nПрямоугольник A: left=1, right=5, bottom=1, top=4")
-    println("Прямоугольник B: left=3, right=7, bottom=2, top=5")
     testSecondTask(1.0, 5.0, 1.0, 4.0, 3.0, 7.0, 2.0, 5.0)  // пересекаются
-
-    println("\nПрямоугольник A: left=1, right=5, bottom=1, top=4")
-    println("Прямоугольник B: left=6, right=8, bottom=2, top=3")
     testSecondTask(1.0, 5.0, 1.0, 4.0, 6.0, 8.0, 2.0, 3.0)  // не пересекаются
 }
 
@@ -39,6 +28,8 @@ fun testSecondTask(
     left1: Double, right1: Double, bottom1: Double, top1: Double,
     left2: Double, right2: Double, bottom2: Double, top2: Double
 ) {
+    println("Прямоугольник A: left=$left1, right=$right1, bottom=$bottom1, top=$top1")
+    println("Прямоугольник B: left=$left2, right=$right2, bottom=$bottom2, top=$top2")
     println("Решение через if:  ${rectanglesRelationIf(left1, right1, bottom1, top1, left2, right2, bottom2, top2)}")
     println("Решение через when: ${rectanglesRelationWhen(left1, right1, bottom1, top1, left2, right2, bottom2, top2)}")
     println()
